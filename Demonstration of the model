@@ -1,0 +1,75 @@
+from gensim.models import Word2Vec
+
+file = open("with_punctuation (1)", "r")
+strings = file.read()
+texts = strings.split('*')
+
+import re
+punctuation_pattern = r'[^\w\s]'
+
+text = 'Он, однако ж, не то чтоб уж был совсем в беспамятстве во всё время болезни: это было лихорадочное состояние, с бредом и полусознанием. Многое он потом припомнил. То казалось ему, что около него собирается много народу и хотят его взять и куда-то вынести, очень об нем спорят и ссорятся. То вдруг он один в комнате, все ушли и боятся его, и только изредка чуть-чуть отворяют дверь посмотреть на него, грозят ему, сговариваются об чем-то промеж себя, смеются и дразнят его. Настасью он часто помнил подле себя; различал и еще одного человека, очень будто бы ему знакомого, но кого именно — никак не мог догадаться и тосковал об этом, даже и плакал. Иной раз казалось ему, что он уже с месяц лежит; в другой раз — что всё тот же день идет. Но об том — об том он совершенно забыл; зато ежеминутно помнил, что об чем-то забыл, чего нельзя забывать, — терзался, мучился, припоминая, стонал, впадал в бешенство или в ужасный, невыносимый страх. Тогда он порывался с места, хотел бежать, но всегда кто-нибудь его останавливал силой, и он опять впадал в бессилие и беспамятство. Наконец он совсем пришел в себя.'
+
+
+#chosing one text
+text = texts[111]
+text = text.lower()
+text = text.replace('  ', ' ')
+text_w = re.sub(punctuation_pattern, '', text)
+
+#loading the model
+from keras.models import load_model
+model1 = load_model('my_model (2).h5')
+
+import numpy as np
+
+#the process of vectorization
+model = Word2Vec.load("word2vec_model.bin")
+
+def get_vector(word):
+    try:
+        return model.wv[word]
+    except KeyError:
+        return None
+vectors = []
+result = []
+labels = []
+for word in seq_list:
+    vector = get_vector(word)
+    if vector is not None:
+        vectors.append(vector)
+
+vectors = np.array(vectors)
+reshaped_vectors = []
+for vector in vectors:
+    vector_r = vector.reshape((1, 100))
+    reshaped_vectors.append(vector_r)
+reshaped_vectors = np.array(reshaped_vectors)
+split_vectors = [reshaped_vectors[i:i + 2] for i in range(0, len(reshaped_vectors), 2)]
+tokens = []
+for i in range(len(reshaped_vectors)-1):
+    tokens.append([reshaped_vectors[i], reshaped_vectors[i+1]])
+for pair in tokens:
+    for i in range(len(pair)-1):
+        input1 = pair[i]
+        input1 = input1.reshape((1, 1, 100))
+        input2 = pair[i + 1]
+        input2 = input2.reshape((1, 1, 100))
+        predictions = model1.predict([input1, input2])
+        predicted_labels = np.argmax(predictions, axis=1)
+        labels.append(predicted_labels)
+for i, n in zip(seq_list, labels):
+  output = f"{i} {n}"
+  result.append(output)
+seq_list = text_w.split()
+
+#replacement of labels with punctuation
+a = ' '.join(result)
+a = a.replace('[0]', ',')
+a = a.replace('[1]', '.')
+a = a.replace('[2]', ' ')
+a = a.replace('[3]', '*')
+a = a.replace(' ,', ',')
+a = a.replace('  ', ' ')
+a = a.replace(' .', '.')
+a = a.replace(' *', '*')
+
