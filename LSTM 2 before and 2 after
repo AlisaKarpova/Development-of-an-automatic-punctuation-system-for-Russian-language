@@ -1,0 +1,217 @@
+import gensim
+from gensim.models import Word2Vec
+import pandas as pd
+
+file = open("with_punctuation (1)", "r")
+strings = file.read()
+strings = strings.replace(' -', '-')
+strings = strings.replace('...', '.')
+texts = strings.split('*')
+
+#functions for finding surroundings
+def find_surroundings(texts, punctuation_to_find):
+  surroundings_list = []
+  for text in texts:
+    words = text.split()
+    for i in range(len(words)):
+      if words[i].endswith(punctuation_to_find):
+        before_first = words[i - 1] if i != 0 else ' '
+        before_second = words[i][:-1]
+        after = [punctuation_to_find] + words[i + 1: i+3]
+        surrounding = ([before_first, before_second], after)
+        surroundings_list.append(surrounding)
+  return surroundings_list
+
+  def find_surroundings2(texts):
+  punctuation = ['.', ',', '!', ':', '?', '"', '-']
+  surroundings_set = set()
+  for text in texts:
+    words = text.split()
+    words_to_take = int(len(words) * 0.1)
+    for i in range(words_to_take):
+      for punct in punctuation:
+        if words[i].endswith(punct):
+          break
+      else:
+        before_first = words[i - 1]
+        before_second = words[i]
+        after = [' '] + words[i + 1: i + 3]
+        surrounding = (before_first, before_second), tuple(after)
+        surroundings_set.add(surrounding)
+  return list(surroundings_set)
+
+  #converting the data to dataframe
+  data_without = find_surroundings2(texts)
+  data_list = []
+for tup in data_without:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data_list.append(result)
+df_w = pd.DataFrame(data_list, columns=['First word before', 'Second word before', 'Punctuation', 'First word  after', 'Second word after'])
+
+data0 = find_surroundings(texts, ',')
+data_list = []
+for tup in data0:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data_list.append(result)
+df_f = pd.DataFrame(data_list, columns=['First word before', 'Second word before', 'Punctuation', 'First word  after', 'Second word after'])
+
+data1 = find_surroundings(texts, '?')
+data1_list = []
+for tup in data1:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data1_list.append(result)
+df1 = pd.DataFrame(data1_list, columns=['First word before', 'Second word before', 'Punctuation', 'First word  after', 'Second word after'])
+
+data2 = find_surroundings(texts, '.')
+data2_list = []
+for tup in data2:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data2_list.append(result)
+df2 = pd.DataFrame(data2_list, columns=['First word before', 'Second word before', 'Punctuation', 'First word  after', 'Second word after'])
+
+data3 = find_surroundings(texts, '!')
+data3_list = []
+for tup in data3:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data3_list.append(result)
+df3 = pd.DataFrame(data3_list, columns=['First word before', 'Second word before', 'Punctuation', 'First word  after', 'Second word after'])
+
+data4 = find_surroundings(texts, ':')
+data4_list = []
+for tup in data4:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data4_list.append(result)
+df4 = pd.DataFrame(data4_list, columns=['First word before', 'Second word before', 'Punctuation', 'First word  after', 'Second word after'])
+
+data5 = find_surroundings(texts, '-')
+data5_list = []
+for tup in data5:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data5_list.append(result)
+df5 = pd.DataFrame(data5_list, columns=['First word before', 'Second word before', 'Punctuation', 'First word  after', 'Second word after'])
+
+data6 = find_surroundings(texts, '"')
+data6_list = []
+for tup in data6:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data6_list.append(result)
+df6 = pd.DataFrame(data6_list, columns=['First word before', 'Second word before', 'Punctuation', 'First word  after', 'Second word after'])
+
+small_number_punctuation = pd.concat([df1, df3, df4, df5, df6])
+small_number_punctuation.loc[:, 'Punctuation'] = '*'
+data_for_model = pd.concat([df_f, df2, df_w, small_number_punctuation])
+replacements = {',': 0, '.': 1, ' ': 2, '*': 3}
+data_for_model['Punctuation'] = data_for_model['Punctuation'].replace(replacements)
+
+#clearing the data
+data_for_model['First word before'] = data_for_model['First word before'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model['Second word before'] = data_for_model['Second word before'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model['First word  after'] = data_for_model['First word  after'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model['Second word after'] = data_for_model['Second word after'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model = data_for_model.sample(frac=1)
+
+#vectorization
+import tensorflow as tf
+from tensorflow import keras
+import numpy as np
+
+labels = pd.DataFrame(data_for_model['Punctuation'])
+labels.array = np.array(labels)
+data_for_model = data_for_model.drop('Punctuation', axis=1)
+
+list_data = data_for_model.values.tolist()
+model1 = Word2Vec(list_data, min_count=1)
+
+model1.save("word2vec_model.bin")
+
+def get_vector(word):
+    try:
+        return model1.wv[word]
+    except:
+        pass
+  for column in data_for_model.columns:
+    data_for_model[column] = data_for_model[column].apply(get_vector)
+
+
+#converting to tensor
+df1 = data_for_model[['First word before']].fillna(0)
+df2 = data_for_model[['Second word before']].fillna(0)
+before = pd.concat([df1, df2], axis=1)
+
+df1 = data_for_model[['First word  after']].fillna(0)
+df2 = data_for_model[['Second word after']].fillna(0)
+after = pd.concat([df1, df2], axis=1)
+
+from sklearn.model_selection import train_test_split
+train_before, test_before = train_test_split(before, test_size=0.2, random_state=42)
+train_after, test_after = train_test_split(after, test_size=0.2, random_state=42)
+train_labels, test_labels = train_test_split(labels.array, test_size=0.2, random_state=42)
+
+train_before = train_before.values.tolist()
+train_after = train_after.values.tolist()
+test_before = test_before.values.tolist()
+test_after = test_after.values.tolist()
+
+b = np.array(train_before)
+a = np.array(train_after)
+c = np.array(test_before)
+d = np.array(test_after)
+a = tf.convert_to_tensor(a)
+b = tf.convert_to_tensor(b)
+c = tf.convert_to_tensor(c)
+d = tf.convert_to_tensor(d)
+
+#model
+from keras.layers import Dropout, Input
+from sklearn.metrics import classification_report
+
+input_dim = 100
+output_dim = 4
+hidden_dim = 400
+input_b = tf.keras.layers.Input(shape=(None, input_dim), name='input_b')
+input_a = tf.keras.layers.Input(shape=(None, input_dim), name='input_a')
+rnn_2 = tf.keras.layers.LSTM(units=hidden_dim)
+rnn_output_b_2 = rnn_2(input_b)
+rnn_output_a_2 = rnn_2(input_a)
+dropout_b_2 = tf.keras.layers.Dropout(0.3)(rnn_output_b_2)
+dropout_a_2 = tf.keras.layers.Dropout(0.3)(rnn_output_a_2)
+dense_b_2 = tf.keras.layers.Dense(64, activation='relu')(dropout_b_2)
+dense_a_2 = tf.keras.layers.Dense(64, activation='relu')(dropout_a_2)
+merged_2 = tf.keras.layers.Concatenate()([dense_b_2, dense_a_2])
+d = tf.keras.layers.Dropout(0.3)(merged_2)
+output = tf.keras.layers.Dense(4, activation='sigmoid')(d)
+model = tf.keras.Model(inputs=[input_b, input_a], outputs=output)
+model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"], run_eagerly=True)
+model.summary()
+early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=20)
+model.fit({'input_b': b, 'input_a': a}, train_labels, epochs=20, batch_size=1024, validation_split = 0.2, callbacks=[early_stopping])
+predictions = model.predict([c,d])
+predicted_labels = predictions.argmax(axis=1)
+report = classification_report(test_labels, predicted_labels)
+print(report)
+
+tf.keras.utils.plot_model(model, show_shapes=True)
