@@ -61,6 +61,7 @@ file = open("with_punctuation (1)", "r")
 strings = file.read()
 strings = strings.replace(' -', '-')
 
+texts = strings.split('*')
 
 #surrounding with punctuation
 strings.count(','), strings.count('.'), strings.count('!'), strings.count('?'), strings.count('-'), strings.count(':'), strings.count('"'), strings.count('...') #punctuation statistics
