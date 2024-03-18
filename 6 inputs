@@ -1,0 +1,300 @@
+#collecting links 
+from bs4 import BeautifulSoup#*
+import requests
+from tqdm.notebook import tqdm
+
+
+url_start = 'https://www.interfax.ru'
+num_of_page = 114
+url = 'https://www.interfax.ru/interview/page_'
+res = []
+for i in tqdm(range(1, num_of_page + 1)):
+    response = requests.get(url + str(i))
+    soup = BeautifulSoup(response.text, 'html.parser')
+    links = soup.find_all('a')
+    list_of_links = []
+    for link in links:
+      link = link.get('href')
+      if not link is None:
+        if 'interview' in link:
+          res.append(link)
+
+len(res)
+#extracting unique links and collecting of texts from them
+new_urls = []
+for i in res:
+  new_urls.append(url_start + i)
+urls = list(set(new_urls))
+
+length = 0 
+with open ('with_punctuation (1)', 'w') as file:
+  for url in urls:
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content.decode('Windows-1251', 'ignore'), 'html.parser')
+    texts = soup.find_all('p')
+    start_flag = False
+    res_string =''
+    for text in texts:
+      if '<b>' in str(text):
+        start_flag = True
+      if start_flag:
+        if not text.get('itemprop') is None:
+          break
+        if '<b>' in str(text):
+          continue
+        res_string += text.get_text()
+        res_string += ' '
+    if len(res_string) > 0:
+      res_string = res_string.lstrip()
+      if not ((list(res_string))[0]).isalnum():
+        res_string = res_string.replace((list(res_string))[0], '')
+      res_string = res_string.lstrip()
+      res_string = ' '.join(res_string.split())
+      length += len(res_string.split(' '))
+      print(res_string)
+      file.write(res_string + '*' + '\n'*3)
+print(length)
+
+
+#working with dataset
+file = open("with_punctuation (1)", "r")
+strings = file.read()
+strings = strings.replace(' -', '-')
+
+
+#surrounding with punctuation
+strings.count(','), strings.count('.'), strings.count('!'), strings.count('?'), strings.count('-'), strings.count(':'), strings.count('"'), strings.count('...') #punctuation statistics
+def find_surroundings(texts, punctuation_to_find):
+  surroundings_list = []
+  for text in texts:
+    words = text.split()
+    for i in range(len(words)):
+      if words[i].endswith(punctuation_to_find):
+        before_first = words[i - 3] if i >= 3 else ' '
+        before_second = words[i - 2] if i >= 2 else ' '
+        before_third = words[i - 1]
+        after = [punctuation_to_find] + words[i + 1: i+4]
+        surrounding = ([before_first, before_second, before_third], after)
+        surroundings_list.append(surrounding)
+  return surroundings_list
+
+#surrounding without punctuation
+def find_surroundings2(texts):
+  punctuation = ['.', ',', '!', ':', '?', '"', '-', '...']
+  surroundings_set = set()
+  for text in texts:
+    words = text.split()
+    words_to_take = int(len(words) * 0.1)
+    for i in range(words_to_take):
+      for punct in punctuation:
+        if words[i].endswith(punct):
+          break
+      else:
+        before_first = words[i - 2]
+        before_second = words[i - 1]
+        before_third = words[i]
+        after =  [' '] + words[i + 1: i+4]
+        surrounding = (before_first, before_second, before_third), tuple(after)
+        surroundings_set.add(surrounding)
+  return list(surroundings_set)
+
+#converting to dataframe
+import pandas as pd
+data_without = find_surroundings2(texts)
+data_list = []
+for tup in data_without:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data_list.append(result)
+df_w = pd.DataFrame(data_list, columns=['First word before', 'Second word before', 'Third word before', 'Punctuation', 'First word  after', 'Second word after', 'Third word after'])
+
+
+data0 = find_surroundings(texts, ',')
+data_list = []
+for tup in data0:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data_list.append(result)
+df_f = pd.DataFrame(data_list, columns=['First word before', 'Second word before', 'Third word before', 'Punctuation', 'First word  after', 'Second word after', 'Third word after'])
+
+data1 = find_surroundings(texts, '?')
+data1_list = []
+for tup in data1:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data1_list.append(result)
+df1 = pd.DataFrame(data1_list, columns=['First word before', 'Second word before', 'Third word before', 'Punctuation', 'First word  after', 'Second word after', 'Third word after'])
+
+data2 = find_surroundings(texts, '.')
+data2_list = []
+for tup in data2:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data2_list.append(result)
+df2 = pd.DataFrame(data2_list, columns=['First word before', 'Second word before', 'Third word before', 'Punctuation', 'First word  after', 'Second word after', 'Third word after'])
+
+data3 = find_surroundings(texts, '!')
+data3_list = []
+for tup in data3:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data3_list.append(result)
+df3 = pd.DataFrame(data3_list, columns=['First word before', 'Second word before', 'Third word before', 'Punctuation', 'First word  after', 'Second word after', 'Third word after'])
+
+data4 = find_surroundings(texts, ':')
+data4_list = []
+for tup in data4:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data4_list.append(result)
+df4 = pd.DataFrame(data4_list, columns=['First word before', 'Second word before', 'Third word before', 'Punctuation', 'First word  after', 'Second word after', 'Third word after'])
+
+data5 = find_surroundings(texts, '-')
+data5_list = []
+for tup in data5:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data5_list.append(result)
+df5 = pd.DataFrame(data5_list, columns=['First word before', 'Second word before', 'Third word before', 'Punctuation', 'First word  after', 'Second word after', 'Third word after'])
+
+data6 = find_surroundings(texts, '"')
+data6_list = []
+for tup in data6:
+  result = []
+  for sublist in tup:
+    for item in sublist:
+        result.append(item)
+  data6_list.append(result)
+df6 = pd.DataFrame(data6_list, columns=['First word before', 'Second word before', 'Third word before', 'Punctuation', 'First word  after', 'Second word after', 'Third word after'])
+
+small_number_punctuation = pd.concat([df1, df3, df4, df5, df6])
+small_number_punctuation.loc[:, 'Punctuation'] = '*'
+data_for_model = pd.concat([df_f, df2, df_w, small_number_punctuation])
+
+
+replacements = {',': 0, '.': 1, ' ': 2, '*': 3}
+data_for_model['Punctuation'] = data_for_model['Punctuation'].replace(replacements)
+
+
+#clearing the data
+data_for_model['First word before'] = data_for_model['First word before'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model['Second word before'] = data_for_model['Second word before'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model['Third word before'] = data_for_model['Third word before'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model['First word  after'] = data_for_model['First word  after'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model['Second word after'] = data_for_model['Second word after'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+data_for_model['Third word after'] = data_for_model['Third word after'].astype(str).str.replace('[^\w\s]','').apply(str.lower)
+
+data_for_model = data_for_model.sample(frac=1)
+
+
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+import numpy as np
+import gensim
+from gensim.models import Word2Vec
+
+labels = pd.DataFrame(data_for_model['Punctuation'])
+labels.array = np.array(labels)
+
+#vectorization
+data_for_model = data_for_model.drop('Punctuation', axis=1)
+list_data = data_for_model.values.tolist()
+model1 = Word2Vec(list_data, min_count=1)
+def get_vector(word):
+    try:
+        return model1.wv[word]
+    except:
+        pass
+for column in data_for_model.columns:
+    data_for_model[column] = data_for_model[column].apply(get_vector)
+
+before_first_df = pd.DataFrame(data_for_model['First word before'])
+df_new_first_before = pd.DataFrame(before_first_df['First word before'].apply(pd.Series))
+
+before_second_df = pd.DataFrame(data_for_model['Second word before'])
+df_new_second_before = pd.DataFrame(before_second_df['Second word before'].apply(pd.Series))
+
+before_third_df = pd.DataFrame(data_for_model['Third word before'])
+df_new_third_before = pd.DataFrame(before_third_df['Third word before'].apply(pd.Series))
+
+after_first_df = pd.DataFrame(data_for_model['First word  after'])
+df_new_first_after = pd.DataFrame(after_first_df['First word  after'].apply(pd.Series))
+df_new_first_after = df_new_first_after.fillna(0)
+
+after_second_df = pd.DataFrame(data_for_model['Second word after'])
+df_new_second_after = pd.DataFrame(after_second_df['Second word after'].apply(pd.Series))
+df_new_second_after = df_new_second_after.fillna(0)
+
+after_third_df = pd.DataFrame(data_for_model['Third word after'])
+df_new_third_after = pd.DataFrame(after_third_df['Third word after'].apply(pd.Series))
+df_new_second_after = df_new_second_after.fillna(0)
+
+#train and test data
+from sklearn.model_selection import train_test_split
+
+train_first_before, test_first_before = train_test_split(df_new_first_before, test_size=0.2, random_state=42)
+train_first_after, test_first_after = train_test_split(df_new_first_after, test_size=0.2, random_state=42)
+train_second_after, test_second_after = train_test_split(df_new_second_after, test_size=0.2, random_state=42)
+train_second_before, test_second_before = train_test_split(df_new_second_before, test_size=0.2, random_state=42)
+train_third_before, test_third_before = train_test_split(df_new_third_before, test_size=0.2, random_state=42)
+train_third_after, test_third_after = train_test_split(df_new_third_after, test_size=0.2, random_state=42)
+train_labels, test_labels = train_test_split(labels.array, test_size=0.2, random_state=42)
+
+#model
+from keras.layers import Dropout, Input
+from sklearn.metrics import classification_report
+
+input1 = keras.Input(shape=(100,))
+input2 = keras.Input(shape=(100,))
+input3 = keras.Input(shape=(100,))
+input4 = keras.Input(shape=(100,))
+input5 = keras.Input(shape=(100,))
+input6 = keras.Input(shape=(100,))
+x1 = layers.Dense(20, activation="relu")(input1)
+x2 = layers.Dense(20, activation="relu")(input2)
+x3 = layers.Dense(20, activation="relu")(input3)
+x4 = layers.Dense(20, activation="relu")(input4)
+x5 = layers.Dense(20, activation="relu")(input5)
+x6 = layers.Dense(20, activation="relu")(input6)
+dropout1 = layers.Dropout(0.2)(x1)
+dropout2 = layers.Dropout(0.2)(x2)
+dropout3 = layers.Dropout(0.2)(x3)
+dropout4 = layers.Dropout(0.2)(x4)
+dropout5 = layers.Dropout(0.2)(x5)
+dropout6 = layers.Dropout(0.2)(x6)
+concatenated = layers.concatenate([dropout1, dropout2, dropout3, dropout4, dropout5, dropout6])
+hidden_layer = layers.Dense(10)(concatenated)
+dropout = layers.Dropout(0.2)(hidden_layer)
+output = layers.Dense(9, activation="softmax")(dropout)
+model = keras.Model(inputs=[input1, input2, input3, input4, input5, input6], outputs=output)
+model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"], run_eagerly=True)
+early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=20)
+tf.keras.utils.plot_model(model, show_shapes=True)
+model = model.fit([train_first_before, train_second_before, train_third_before, train_first_after, train_second_after, train_third_after], train_labels, epochs=50, batch_size=1024, validation_split = 0.2, callbacks=[early_stopping])
+predictions = model.predict([test_first_before, test_second_before, test_third_before, test_first_after, test_second_after, test_third_after])
+predicted_labels = predictions.argmax(axis=1)
+report = classification_report(test_labels, predicted_labels)
+print(report)
+
+tf.keras.utils.plot_model(model, show_shapes=True)
+
+
+
+
+
+
