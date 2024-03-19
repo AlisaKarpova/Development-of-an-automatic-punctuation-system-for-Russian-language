@@ -29,6 +29,7 @@ def get_vector(word):
         return model.wv[word]
     except KeyError:
         return None
+seq_list = text_w.split()
 vectors = []
 result = []
 labels = []
@@ -43,7 +44,6 @@ for vector in vectors:
     vector_r = vector.reshape((1, 100))
     reshaped_vectors.append(vector_r)
 reshaped_vectors = np.array(reshaped_vectors)
-split_vectors = [reshaped_vectors[i:i + 2] for i in range(0, len(reshaped_vectors), 2)]
 tokens = []
 for i in range(len(reshaped_vectors)-1):
     tokens.append([reshaped_vectors[i], reshaped_vectors[i+1]])
@@ -59,7 +59,6 @@ for pair in tokens:
 for i, n in zip(seq_list, labels):
   output = f"{i} {n}"
   result.append(output)
-seq_list = text_w.split()
 
 #replacement of labels with punctuation
 a = ' '.join(result)
