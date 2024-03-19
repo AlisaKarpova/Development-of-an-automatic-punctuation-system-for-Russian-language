@@ -65,6 +65,10 @@ texts = strings.split('*')
 
 #surrounding with punctuation
 strings.count(','), strings.count('.'), strings.count('!'), strings.count('?'), strings.count('-'), strings.count(':'), strings.count('"'), strings.count('...') #punctuation statistics
+
+strings = strings.replace('...', '.')
+texts = strings.split('*')
+
 def find_surroundings(texts, punctuation_to_find):
   surroundings_list = []
   for text in texts:
@@ -81,7 +85,7 @@ def find_surroundings(texts, punctuation_to_find):
 
 #surrounding without punctuation
 def find_surroundings2(texts):
-  punctuation = ['.', ',', '!', ':', '?', '"', '-', '...']
+  punctuation = ['.', ',', '!', ':', '?', '"', '-']
   surroundings_set = set()
   for text in texts:
     words = text.split()
@@ -281,7 +285,7 @@ dropout6 = layers.Dropout(0.2)(x6)
 concatenated = layers.concatenate([dropout1, dropout2, dropout3, dropout4, dropout5, dropout6])
 hidden_layer = layers.Dense(10)(concatenated)
 dropout = layers.Dropout(0.2)(hidden_layer)
-output = layers.Dense(9, activation="softmax")(dropout)
+output = layers.Dense(4, activation="softmax")(dropout)
 model = keras.Model(inputs=[input1, input2, input3, input4, input5, input6], outputs=output)
 model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"], run_eagerly=True)
 early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=20)
