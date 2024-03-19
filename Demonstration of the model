@@ -13,7 +13,6 @@ text = 'Он, однако ж, не то чтоб уж был совсем в б
 #chosing one text
 text = texts[111]
 text = text.lower()
-text = text.replace('  ', ' ')
 text_w = re.sub(punctuation_pattern, '', text)
 
 #loading the model
