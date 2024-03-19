@@ -1,11 +1,11 @@
 file = open("with_punctuation (1)", "r")
 strings = file.read()
 strings = strings.replace(' -', '-')
-
+strings = strings.replace('...', '.')
 texts = strings.split('*')
 
 #surrounding with punctuation
-strings.count(','), strings.count('.'), strings.count('!'), strings.count('?'), strings.count('-'), strings.count(':'), strings.count('"'), strings.count('...') #punctuation statistics
+
 def find_surroundings(texts, punctuation_to_find):
   surroundings_list = []
   for text in texts:
@@ -22,7 +22,7 @@ def find_surroundings(texts, punctuation_to_find):
 
 #surrounding without punctuation
 def find_surroundings2(texts):
-  punctuation = ['.', ',', '!', ':', '?', '"', '-', '...']
+  punctuation = ['.', ',', '!', ':', '?', '"', '-']
   surroundings_set = set()
   for text in texts:
     words = text.split()
